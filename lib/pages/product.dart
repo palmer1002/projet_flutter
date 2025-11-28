@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
+/// Écran de gestion des produits
 class ProductListScreen extends StatefulWidget {
-  final Function onLogout;
+  /// Constructeur de l'écran de gestion des produits
+  const ProductListScreen({super.key});
 
-  const ProductListScreen({
-    super.key,
-    required this.onLogout,
-  });
-
+  /// Création de l'état du widget
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
 }
 
+/// État de l'écran de gestion des produits
 class _ProductListScreenState extends State<ProductListScreen> {
+  /// Liste des produits
   List<Map<String, dynamic>> products = [];
 
+  /// Contrôleur pour le champ nom du produit
   final nameCtrl = TextEditingController();
+  
+  /// Contrôleur pour le champ prix du produit
   final priceCtrl = TextEditingController();
 
+  /// Fonction pour ajouter un nouveau produit
   void _addProduct() {
     showDialog(
       context: context,
@@ -47,7 +52,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 products.add({
                   "name": nameCtrl.text,
                   "price": priceCtrl.text,
-                  "quantity": 1, // Add quantity field with default value of 1
+                  "quantity": 1, // Quantité initiale du produit
                 });
                 nameCtrl.clear();
                 priceCtrl.clear();
@@ -61,14 +66,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  // Function to increment product quantity
+  /// Fonction pour incrémenter la quantité d'un produit
   void _incrementProduct(int index) {
     setState(() {
       products[index]["quantity"] = (products[index]["quantity"] as int) + 1;
     });
   }
 
-  // Function to decrement product quantity
+  /// Fonction pour décrémenter la quantité d'un produit
   void _decrementProduct(int index) {
     setState(() {
       if (products[index]["quantity"] > 1) {
@@ -77,24 +82,34 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
   }
 
+  /// Fonction de déconnexion
+  Future<void> _handleLogout() async {
+    await AuthService.logout();
+    // Redirection vers l'écran de connexion se fait automatiquement par ProtectedRoute
+  }
+
+  /// Construction de l'interface utilisateur de l'écran de gestion des produits
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Barre d'application avec bouton de déconnexion
       appBar: AppBar(
         title: const Text("Liste des Produits"),
         actions: [
           IconButton(
-            onPressed: () => widget.onLogout(),
+            onPressed: _handleLogout,
             icon: const Icon(Icons.logout),
           )
         ],
       ),
 
+      // Bouton flottant pour ajouter un produit
       floatingActionButton: FloatingActionButton(
         onPressed: _addProduct,
         child: const Icon(Icons.add),
       ),
 
+      // Contenu principal de l'écran
       body: products.isEmpty
           ? const Center(child: Text("Aucun produit ajouté"))
           : ListView.builder(
@@ -112,17 +127,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Decrement button
+                      // Bouton pour décrémenter la quantité
                       IconButton(
                         icon: const Icon(Icons.remove),
                         onPressed: () => _decrementProduct(i),
                       ),
-                      // Increment button
+                      // Bouton pour incrémenter la quantité
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _incrementProduct(i),
                       ),
-                      // Delete button
+                      // Bouton pour supprimer le produit
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {
@@ -135,5 +150,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
               },
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    priceCtrl.dispose();
+    super.dispose();
   }
 }

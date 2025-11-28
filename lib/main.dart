@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/product.dart';
+import 'services/auth_service.dart';
+import 'widgets/protected_route.dart';
 
-
+// **********************************************
+// *             CONFIGURATION THEME            *
+// **********************************************
 
 /// Classe de configuration du thème de l'application
 class AppTheme {
@@ -52,6 +55,9 @@ class AppTheme {
   }
 }
 
+// **********************************************
+// *                  MAIN APP                  *
+// **********************************************
 
 /// Point d'entrée principal de l'application
 void main() => runApp(const MyApp());
@@ -68,27 +74,21 @@ class MyApp extends StatelessWidget {
       title: "Gestion Produits",
       theme: AppTheme.minimalist(),
       debugShowCheckedModeBanner: false,
-      home: const AuthWrapper(),
+      home: const MainApp(),
     );
   }
 }
 
-
-/// Widget wrapper pour gérer l'authentification
-class AuthWrapper extends StatefulWidget {
+/// Widget principal de l'application avec gestion de l'authentification
+class MainApp extends StatefulWidget {
   /// Constructeur avec clé optionnelle
-  const AuthWrapper({super.key});
+  const MainApp({super.key});
 
-  /// Création de l'état du widget
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
+  State<MainApp> createState() => _MainAppState();
 }
 
-/// État du wrapper d'authentification
-class _AuthWrapperState extends State<AuthWrapper> {
-  /// Indique si l'utilisateur est connecté
-  bool isLogged = false;
-  
+class _MainAppState extends State<MainApp> {
   /// Indique si l'application est en cours de chargement
   bool loading = true;
   
@@ -99,55 +99,32 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    _checkLogin();
-  }
-
-  /// Vérification de l'état de connexion de l'utilisateur
-  Future<void> _checkLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    isLogged = prefs.getBool("isLogged") ?? false;
-    loading = false;
-    setState(() {});
   }
 
   /// Fonction de connexion de l'utilisateur
-  Future<void> _login() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("isLogged", true);
-    setState(() => isLogged = true);
+  Future<void> _handleLogin() async {
+    setState(() {});
   }
 
   /// Fonction de déconnexion de l'utilisateur
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("isLogged", false);
-    setState(() => isLogged = false);
+  Future<void> _handleLogout() async {
+    await AuthService.logout();
+    setState(() {});
   }
 
-  /// Construction de l'interface utilisateur en fonction de l'état d'authentification
   @override
   Widget build(BuildContext context) {
-    // Affichage d'un indicateur de chargement pendant la vérification
-    if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
-      );
-    }
-
-    // Affichage de l'écran de produits si l'utilisateur est connecté
-    if (isLogged) {
-      return ProductListScreen(onLogout: _logout);
-    }
-
-    // Affichage de l'écran d'inscription ou de connexion
-    return showRegister
-        ? RegistrationScreen(
-            onRegister: _login,
-            onLoginPressed: () => setState(() => showRegister = false),
-          )
-        : LoginScreen(
-            onLogin: _login,
-            onRegisterPressed: () => setState(() => showRegister = true),
-          );
+    return ProtectedRoute(
+      child: ProductListScreen(onLogout: _handleLogout),
+      fallback: showRegister
+          ? RegistrationScreen(
+              onRegister: _handleLogin,
+              onLoginPressed: () => setState(() => showRegister = false),
+            )
+          : LoginScreen(
+              onLogin: _handleLogin,
+              onRegisterPressed: () => setState(() => showRegister = true),
+            ),
+    );
   }
 }

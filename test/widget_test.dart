@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:projet_flutter/main.dart';
+import 'package:projet_flutter/services/auth_service.dart';
 
 void main() {
   setUp(() async {
@@ -92,5 +93,65 @@ void main() {
     
     // Vérifier que le bouton d'ajout flottant est présent.
     expect(find.byType(FloatingActionButton), findsOneWidget);
+  });
+  
+  testWidgets('Login avec identifiants valides', (WidgetTester tester) async {
+    // Enregistrer un utilisateur de test
+    await AuthService.registerUser('test@example.com', 'password123');
+    
+    // Construire notre application et déclencher un frame.
+    await tester.pumpWidget(const MyApp());
+    
+    // Attendre que l'application se charge
+    await tester.pumpAndSettle();
+    
+    // Remplir les champs de connexion
+    await tester.enterText(find.byType(TextField).at(0), 'test@example.com');
+    await tester.enterText(find.byType(TextField).at(1), 'password123');
+    
+    // Cliquer sur le bouton de connexion
+    await tester.tap(find.text('Se connecter'));
+    
+    // Attendre la fin de l'opération de connexion
+    await tester.pumpAndSettle();
+    
+    // Vérifier que le titre de la page des produits est affiché.
+    expect(find.text('Liste des Produits'), findsOneWidget);
+  });
+  
+  testWidgets('Login avec identifiants invalides', (WidgetTester tester) async {
+    // Construire notre application et déclencher un frame.
+    await tester.pumpWidget(const MyApp());
+    
+    // Attendre que l'application se charge
+    await tester.pumpAndSettle();
+    
+    // Remplir les champs de connexion avec des identifiants invalides
+    await tester.enterText(find.byType(TextField).at(0), 'invalid@example.com');
+    await tester.enterText(find.byType(TextField).at(1), 'wrongpassword');
+    
+    // Cliquer sur le bouton de connexion
+    await tester.tap(find.text('Se connecter'));
+    
+    // Attendre la fin de l'opération de connexion
+    await tester.pumpAndSettle();
+    
+    // Vérifier que le message d'erreur est affiché
+    expect(find.text('Email ou mot de passe incorrect'), findsOneWidget);
+  });
+  
+  testWidgets('Accès refusé sans authentification', (WidgetTester tester) async {
+    // Simuler une session invalide
+    await AuthService.logout();
+    
+    // Construire notre application et déclencher un frame.
+    await tester.pumpWidget(const MyApp());
+    
+    // Attendre que l'application se charge
+    await tester.pumpAndSettle();
+    
+    // Vérifier que l'écran de connexion est affiché (pas l'écran des produits)
+    expect(find.text('Connexion'), findsOneWidget);
+    expect(find.text('Liste des Produits'), findsNothing);
   });
 }
