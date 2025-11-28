@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/product.dart';
-import 'services/auth_service.dart';
 import 'widgets/protected_route.dart';
 
 // **********************************************
@@ -89,9 +88,6 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  /// Indique si l'application est en cours de chargement
-  bool loading = true;
-  
   /// Indique si l'écran d'inscription doit être affiché
   bool showRegister = false;
 
@@ -106,16 +102,9 @@ class _MainAppState extends State<MainApp> {
     setState(() {});
   }
 
-  /// Fonction de déconnexion de l'utilisateur
-  Future<void> _handleLogout() async {
-    await AuthService.logout();
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return ProtectedRoute(
-      child: ProductListScreen(onLogout: _handleLogout),
       fallback: showRegister
           ? RegistrationScreen(
               onRegister: _handleLogin,
@@ -125,6 +114,7 @@ class _MainAppState extends State<MainApp> {
               onLogin: _handleLogin,
               onRegisterPressed: () => setState(() => showRegister = true),
             ),
+      child: const ProductListScreen(),
     );
   }
 }
